@@ -78,6 +78,7 @@ RUN \
     chown -R ${APP_USER}:${APP_USER} ${APP_ROOT}
 COPY --chmod=0755 --chown=${APP_USER}:${APP_USER} config/sync_repos.sh ${APP_ROOT}/sync_repos.sh
 USER ${APP_USER}
-RUN mkdir -p ~/.ssh && chmod 0700 ~/.ssh && ssh-keyscan -H github.com >> ~/.ssh/known_hosts && \
+RUN mkdir -p ~/.ssh && chmod 0700 ~/.ssh && ssh-keyscan \
+    -H github.com gitlab.com bitbucket.org >> ~/.ssh/known_hosts && \
     mkdir -p ~/.composer && chown ${APP_USER}:${APP_USER} ~/.composer
 ENTRYPOINT ["/entry.sh"]
