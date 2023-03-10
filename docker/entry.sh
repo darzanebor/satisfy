@@ -61,7 +61,7 @@ EOF
   chown ${APP_USER}:${APP_USER} ${APP_USER_HOME}/.composer/auth.json
 fi
 
-if [ ! -f ${APP_USER_HOME}/.ssh/config ]; then
+if [ ! -f ${APP_USER_HOME}/.ssh/config ] && [ -f ${APP_USER_HOME}/.ssh/id_rsa ]; then
   : ${STRICT_HOST_KEY_CHECKING:=no}
   cat >${APP_USER_HOME}/.ssh/config <<EOF
 Host *
