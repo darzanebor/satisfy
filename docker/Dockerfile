@@ -3,7 +3,7 @@ ENV APP_ENV=${APP_ENV:-dev}
 ENV APP_DEBUG=${APP_DEBUG:-1}
 ENV APP_USER=${APP_USER:-"satisfy"}
 ENV APP_ROOT=${APP_ROOT:-'/usr/src/app'}
-ENV SATISFY_VERSION=${SATISFY_VERSION:-"3.5.0"}
+ENV SATISFY_VERSION=${SATISFY_VERSION:-"3.5.1"}
 RUN apk add --update --no-cache \
         php81 \
         php81-fpm \
