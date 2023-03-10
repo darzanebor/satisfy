@@ -3,7 +3,7 @@ ENV APP_ENV=${APP_ENV:-dev}
 ENV APP_DEBUG=${APP_DEBUG:-1}
 ENV APP_USER=${APP_USER:-"satisfy"}
 ENV APP_ROOT=${APP_ROOT:-'/usr/src/app'}
-ENV SATISFY_VERSION=${SATISFY_VERSION:-"3.5.0"}
+ENV SATISFY_VERSION=${SATISFY_VERSION:-"3.5.1"}
 RUN apk add --update --no-cache \
         php81 \
         php81-fpm \
@@ -78,6 +78,7 @@ RUN \
     chown -R ${APP_USER}:${APP_USER} ${APP_ROOT}
 COPY --chmod=0755 --chown=${APP_USER}:${APP_USER} config/sync_repos.sh ${APP_ROOT}/sync_repos.sh
 USER ${APP_USER}
-RUN mkdir -p ~/.ssh && chmod 0700 ~/.ssh && ssh-keyscan -H github.com >> ~/.ssh/known_hosts && \
+RUN mkdir -p ~/.ssh && chmod 0700 ~/.ssh && ssh-keyscan \
+    -H github.com gitlab.com bitbucket.org >> ~/.ssh/known_hosts && \
     mkdir -p ~/.composer && chown ${APP_USER}:${APP_USER} ~/.composer
 ENTRYPOINT ["/entry.sh"]
