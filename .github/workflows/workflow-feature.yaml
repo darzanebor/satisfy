@@ -21,4 +21,4 @@ jobs:
         run: echo $GITHUB_SHA > $GITHUB_WORKSPACE/_meta
 
       - name: Build container image
-        run: docker build -t alphaceti/${container_image_name}:$(echo $GITHUB_SHA | head -c7) ./docker
+        run: DOCKER_BUILDKIT=1 docker build -t alphaceti/${container_image_name}:$(echo $GITHUB_SHA | head -c7) ./docker
