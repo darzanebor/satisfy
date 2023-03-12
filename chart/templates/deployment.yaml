@@ -1,0 +1,139 @@
+{{- $apiVersion := include "satisfy.deployAPIVersion" . -}}
+apiVersion: {{ $apiVersion }}
+kind: Deployment
+metadata:
+  name: {{ include "satisfy.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "satisfy.name" . }}
+    helm.sh/chart: {{ include "satisfy.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "satisfy.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "satisfy.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      initContainers:
+        - name: init
+          image: "{{ include "satisfy.image" . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -xe
+              if [[ -e /usr/src/app_persist/satis.json ]]; then
+                echo >&2 "Existing installation found, moving on.."
+                exit 0
+              else
+                echo >&2 "Seeding new instance.."
+                cp -r /usr/src/app/* /usr/src/app_persist/
+                for ref in $(find /usr/src/app_persist -mindepth 1 -maxdepth 1 -not -name ".snapshot"); do
+                  chown -R satisfy:satisfy $ref
+                done
+              fi
+              chown -R satisfy:satisfy /usr/src/app_persist
+              echo >&2 "Init completed.."
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: app-persist
+              mountPath: /usr/src/app_persist
+      containers:
+        - name: satisfy
+          image: "{{ include "satisfy.image" . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: REPO_NAME
+              value: "{{ .Values.satisfy.repoName }}"
+            - name: HOMEPAGE
+              value: "{{ .Values.satisfy.homepage }}"
+            {{- if .Values.satisfy.cronEnabled }}
+            - name: CRON_ENABLED
+              value: {{ .Values.satisfy.cronEnabled }}
+            {{- if .Values.satisfy.cronSyncSeconds }}
+            - name: CRON_SYNC_EVERY
+              value: {{ .Values.satisfy.cronSyncSeconds }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.satisfy.oauthToken }}
+            - name: GITHUB_OAUTH
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "satisfy.fullname" . }}
+                  key: GITHUB_OAUTH
+            {{- end }}
+            {{- if .Values.satisfy.sshPrivateKey }}
+            - name: ADD_HOST_KEYS
+              value: "true"
+            - name: SSH_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "satisfy.fullname" . }}
+                  key: SSH_PRIVATE_KEY
+            {{- end }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 20
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 20
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          {{- end }}
+          volumeMounts:
+            - name: app-persist
+              mountPath: /usr/src/app
+{{- with .Values.resources }}
+          resources:
+{{ toYaml . | indent 12 }}
+{{- end }}
+      volumes:
+        - name: app-persist
+        {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ template "satisfy.fullname" . }}
+        {{- else }}
+          emptyDir: {}
+        {{- end -}}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
