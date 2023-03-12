@@ -1,0 +1,76 @@
+# Default values for Satisfy.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: docker.io/alphaceti/satisfy
+  tag: 3.5.1-alpine3.17
+#  digest: 
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+    # - secret1
+    # - secret2
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  labels: []
+    # traffic-type: external
+  hosts: []
+#    - host: satis.example.com
+#      paths:
+#        - path: /
+#          pathType: ImplementationSpecific
+  tls: []
+#    - secretName: satis-tls
+#      hosts:
+#        - satis.example.com
+
+terminationGracePeriodSeconds: 15
+
+livenessProbe:
+  enabled: true
+
+readinessProbe:
+  enabled: true
+
+resources: {}
+  # If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  #limits:
+  #  cpu: 100m
+  #  memory: 384Mi
+  #requests:
+  #  cpu: 100m
+  #  memory: 384Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 32Gi
+  storageClass: ~  # set your PV storage class here
+  ## A manually managed Persistent Volume and Claim
+  ## Requires persistence.enabled: true
+  ## If defined, PVC must be created manually before volume will be bound
+  # existingClaim:
+
+
+## Application settings
+## For more details see Satis documentaion
+## https://getcomposer.org/doc/articles/handling-private-packages-with-satis.md#setup
+satisfy:
+  repoName: "repo/name"
+  homepage: https://satis.example.com  # set it to FQDN of your ingress
+  sshPrivateKey: ~  # set it via CLI for example: `--set satisfy.sshPrivateKey="$(<~/.ssh/mirai/id_rsa)"`
+  oauthToken: ~ # set it via CLI for example: `--set satisfy.oauthToken="my_github_token"`
+  cronEnabled: ~ # defaults to true in container
+  cronSyncSeconds: ~ # defaults to 300 seconds
